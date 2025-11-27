@@ -22,7 +22,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   callbacks: {
     authorized({ auth }) {
       if (!auth?.user)
-        return Response.json({ error: "Sai daqui mala" }, { status: 401 });
+        return Response.json(
+          {
+            status: 401,
+            error: "Você precisa estar registrado para ter acesso a esta rota",
+          },
+          { status: 401 }
+        );
       return true;
     },
 
