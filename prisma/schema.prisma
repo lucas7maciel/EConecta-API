@@ -1,0 +1,213 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// User and Session
+model User {
+  id                        String    @id @default(cuid())
+  name                      String?
+  email                     String?   @unique
+  emailVerified             DateTime?
+  image                     String?
+  accounts                  Account[]
+  sessions                  Session[]
+
+  // Relations
+  profilePic                Image?
+  comments                  Comment[]
+  confirmations             Confirmation[]
+  registeredTrashSpots      TrashSpot[]       @relation("RegisteredBy")
+  registeredCollectionSpots CollectionSpots[] @relation("CollectionRegisteredBy")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+
+  id_token      String?
+  session_state String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Trash Spot
+model TrashSpot {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+
+  stayDuration StayDuration?
+  vegetation   Vegetation?
+  terrain      Terrain?
+  climate      Climate?
+  water        Water[]
+  soil         Soil[]
+  animals      Animal[]
+  disposal     Disposal[]
+
+  // Relations
+  images          Image[]
+  locationId      Int
+  location        Location @relation(fields: [locationId], references: [id])
+  comments        Comment[]
+  confirmations   Confirmation[]
+  registeredById  String?
+  registeredBy    User?          @relation("RegisteredBy", fields: [registeredById], references: [id], onDelete: SetNull)
+}
+
+model CollectionSpots {
+  id              Int      @id @default(autoincrement())
+  name            String
+  email           String
+  createdAt       DateTime @default(now())
+
+  // Relations
+  images          Image[]
+  locationId      Int
+  location        Location @relation(fields: [locationId], references: [id])
+  comments        Comment[]
+  confirmations   Confirmation[]
+  registeredById  String?
+  registeredBy    User?          @relation("CollectionRegisteredBy", fields: [registeredById], references: [id], onDelete: SetNull)
+}
+
+enum StayDuration {
+  UP_TO_5_DAYS
+  SEVERAL_WEEKS
+  SEVERAL_MONTHS
+}
+
+enum Vegetation {
+  NONE
+  LOW
+  TALL
+}
+
+enum Water {
+  ABUNDANT
+  FRESH
+  BRACKISH
+  NONE
+}
+
+enum Soil {
+  FERTILE
+  ROCKY
+  COMPACT
+}
+
+enum Terrain {
+  FLAT
+  STEEP
+  INACCESSIBLE
+}
+
+enum Animal {
+  VARIOUS
+  FLIES
+  HORSES
+  PIGS
+}
+
+enum Climate {
+  TROPICAL
+  TEMPERATE
+  ARCTIC
+  UNKNOWN
+  NO_RESPONSE
+}
+
+enum Disposal {
+  TRASH_BINS_AVAILABLE
+}
+
+// Image
+model Image {
+  id                Int    @id @default(autoincrement())
+  url               String
+
+  // Relations
+  userId            String? @unique
+  user              User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  trashSpotId       Int?
+  trashSpot         TrashSpot? @relation(fields: [trashSpotId], references: [id], onDelete: Cascade)
+
+  collectionSpotId  Int?
+  collectionSpot    CollectionSpots? @relation(fields: [collectionSpotId], references: [id], onDelete: Cascade)
+}
+
+// Location
+model Location {
+  id            Int      @id @default(autoincrement())
+  latitude      Float
+  longitude     Float
+  city          String?
+  state         String?
+  country       String?
+  district      String?   // Bairro
+  postalCode    String?   // CEP
+  formattedAddr String?   // Endereco completo
+
+  // Relations
+  trashSpots        TrashSpot[]
+  collectionSpots   CollectionSpots[]
+}
+
+// Comment
+model Comment {
+  id        Int      @id @default(autoincrement())
+  content   String
+  createdAt DateTime @default(now())
+
+  // Relations
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  trashSpotId      Int?
+  trashSpot        TrashSpot?       @relation(fields: [trashSpotId], references: [id], onDelete: Cascade)
+  collectionSpotId Int?
+  collectionSpot   CollectionSpots? @relation(fields: [collectionSpotId], references: [id], onDelete: Cascade)
+}
+
+model Confirmation {
+  id          Int      @id @default(autoincrement())
+  confirmedAt DateTime @default(now())
+
+  // Relations
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  trashSpotId      Int?
+  trashSpot        TrashSpot?       @relation(fields: [trashSpotId], references: [id], onDelete: Cascade)
+  collectionSpotId Int?
+  collectionSpot   CollectionSpots? @relation(fields: [collectionSpotId], references: [id], onDelete: Cascade)
+
+  @@unique([trashSpotId, userId])
+  @@unique([collectionSpotId, userId])
+}

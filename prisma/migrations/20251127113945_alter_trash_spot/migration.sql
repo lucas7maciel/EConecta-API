@@ -1,0 +1,5 @@
+-- AlterTable
+ALTER TABLE "TrashSpot" ALTER COLUMN "stayDuration" DROP NOT NULL,
+ALTER COLUMN "vegetation" DROP NOT NULL,
+ALTER COLUMN "terrain" DROP NOT NULL,
+ALTER COLUMN "climate" DROP NOT NULL;
