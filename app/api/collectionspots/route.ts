@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
 
-import { auth } from "@/auth";
-
 import { createCollectionSpot, listCollectionSpots } from "./service";
 import { collectionSpotSchema } from "./validation";
+import { verifyAuth } from "@/lib/authJwt";
 
 export async function GET() {
   try {
@@ -20,14 +19,16 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
-    const session = await auth();
+    const payload = verifyAuth(req);
 
-    if (!session?.user?.id) {
+    if (!payload || !payload?.id) {
       return NextResponse.json(
         { error: "Usuário não autenticado" },
         { status: 401 }
       );
     }
+
+    const { id } = payload;
 
     const body = await req.json();
     const parsed = collectionSpotSchema.safeParse(body);
@@ -39,7 +40,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const spot = await createCollectionSpot(parsed.data, session.user.id);
+    const spot = await createCollectionSpot(parsed.data, id);
 
     return NextResponse.json({ data: spot }, { status: 201 });
   } catch (error) {

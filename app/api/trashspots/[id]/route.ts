@@ -1,10 +1,9 @@
 import { NextResponse, NextRequest } from "next/server";
 import { z } from "zod";
 
-import { auth } from "@/auth";
-
 import { deleteSpot, getSpotById, updateSpot } from "../service";
 import { spotUpdateSchema } from "../validation";
+import { verifyAuth } from "@/lib/authJwt";
 
 const idParamSchema = z.object({
   id: z.coerce.number().int().positive(),
@@ -15,8 +14,9 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
+    const payload = verifyAuth(req);
+
+    if (!payload || !payload?.id) {
       return NextResponse.json(
         { error: "Usuario nao autenticado" },
         { status: 401 }
@@ -49,7 +49,7 @@ export async function PATCH(
       );
     }
 
-    if (existing.registeredById !== session.user.id) {
+    if (existing.registeredById !== payload.id) {
       return NextResponse.json(
         { error: "Sem permissao para alterar este foco de lixo" },
         { status: 403 }
@@ -68,12 +68,13 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
+    const payload = verifyAuth(req);
+
+    if (!payload || !payload?.id) {
       return NextResponse.json(
         { error: "Usuario nao autenticado" },
         { status: 401 }
@@ -82,7 +83,7 @@ export async function DELETE(
 
     const { id: rawId } = await params;
     const parsedId = idParamSchema.safeParse({ id: Number(rawId) });
-    
+
     if (!parsedId.success) {
       return NextResponse.json({ error: "ID invalido" }, { status: 400 });
     }
@@ -97,7 +98,7 @@ export async function DELETE(
       );
     }
 
-    if (existing.registeredById !== session.user.id) {
+    if (existing.registeredById !== payload.id) {
       return NextResponse.json(
         { error: "Sem permissao para deletar este foco de lixo" },
         { status: 403 }

@@ -1,25 +1,25 @@
 import { NextResponse, NextRequest } from "next/server";
 import { z } from "zod";
 
-import { auth } from "@/auth";
 import {
   createConfirmation,
   deleteConfirmation,
   getSpotById,
 } from "../../service";
+import { verifyAuth } from "@/lib/authJwt";
 
 const idParamSchema = z.object({
   id: z.coerce.number().int().positive(),
 });
 
 export async function POST(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth();
-
-    if (!session?.user?.id) {
+    const payload = verifyAuth(req);
+    
+        if (!payload || !payload?.id) {
       return NextResponse.json(
         { error: "Usuário não autenticado" },
         { status: 401 }
@@ -43,7 +43,7 @@ export async function POST(
     }
 
     try {
-      const confirmation = await createConfirmation(id, session.user.id);
+      const confirmation = await createConfirmation(id, payload.id);
       return NextResponse.json({ data: confirmation }, { status: 201 });
     } catch (err: any) {
       if (err?.code === "P2002") {
@@ -64,13 +64,13 @@ export async function POST(
 }
 
 export async function DELETE(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth();
-
-    if (!session?.user?.id) {
+    const payload = verifyAuth(req);
+    
+        if (!payload || !payload?.id) {
       return NextResponse.json(
         { error: "Usuário não autenticado" },
         { status: 401 }
@@ -95,7 +95,7 @@ export async function DELETE(
     }
 
     try {
-      await deleteConfirmation(id, session.user.id);
+      await deleteConfirmation(id, payload.id);
       return NextResponse.json({ success: true });
     } catch (err: any) {
       if (err?.code === "P2025") {

@@ -1,14 +1,13 @@
 import { NextResponse } from "next/server";
 import { createComment } from "./service";
 import { createCommentSchema } from "./validation";
-import { auth } from "@/auth";
+import { verifyAuth } from "@/lib/authJwt";
 
 export async function POST(req: Request) {
   try {
-    const session = await auth();
-    console.log(session);
+    const payload = verifyAuth(req);
     
-    if (!session?.user?.id) {
+        if (!payload || !payload?.id) {
       return NextResponse.json(
         { error: "Usuário não autenticado" },
         { status: 401 }
@@ -26,7 +25,7 @@ export async function POST(req: Request) {
     }
 
     // Tratar quando trashspotId não existe
-    const comment = await createComment(parsed.data, session.user.id);
+    const comment = await createComment(parsed.data, payload.id);
 
     return NextResponse.json({ data: comment }, { status: 201 });
   } catch (error) {

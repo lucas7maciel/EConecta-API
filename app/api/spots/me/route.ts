@@ -1,14 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { auth } from "@/auth";
 import prisma from "@/lib/prisma";
+import { verifyAuth } from "@/lib/authJwt";
 
 type SpotType = "trash" | "collection";
 
 export async function GET(req: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
+    const payload = verifyAuth(req);
+
+    if (!payload || !payload?.id) {
       return NextResponse.json(
         { error: "Usuario nao autenticado" },
         { status: 401 }
@@ -30,7 +31,7 @@ export async function GET(req: NextRequest) {
     const spotType = typeParam as SpotType | undefined;
 
     const baseTrashWhere = {
-      registeredById: session.user.id,
+      registeredById: payload.id,
       ...(name && { name: { contains: name, mode: "insensitive" as const } }),
       ...(city && {
         location: { city: { contains: city, mode: "insensitive" as const } },
@@ -38,7 +39,7 @@ export async function GET(req: NextRequest) {
     };
 
     const baseCollectionWhere = {
-      registeredById: session.user.id,
+      registeredById: payload.id,
       ...(name && { name: { contains: name, mode: "insensitive" as const } }),
       ...(city && {
         location: { city: { contains: city, mode: "insensitive" as const } },

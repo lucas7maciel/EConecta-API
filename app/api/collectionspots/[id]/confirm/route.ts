@@ -1,26 +1,25 @@
 import { NextResponse, NextRequest } from "next/server";
 import { z } from "zod";
 
-import { auth } from "@/auth";
-
 import {
   createCollectionSpotConfirmation,
   deleteCollectionSpotConfirmation,
   getCollectionSpotById,
 } from "../../service";
+import { verifyAuth } from "@/lib/authJwt";
 
 const idParamSchema = z.object({
   id: z.coerce.number().int().positive(),
 });
 
 export async function POST(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth();
-
-    if (!session?.user?.id) {
+    const payload = verifyAuth(req);
+    
+        if (!payload || !payload?.id) {
       return NextResponse.json(
         { error: "Usuario nao autenticado" },
         { status: 401 }
@@ -47,7 +46,7 @@ export async function POST(
     try {
       const confirmation = await createCollectionSpotConfirmation(
         id,
-        session.user.id
+        payload.id
       );
       return NextResponse.json({ data: confirmation }, { status: 201 });
     } catch (err: any) {
@@ -69,13 +68,13 @@ export async function POST(
 }
 
 export async function DELETE(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth();
+    const payload = verifyAuth(req);
 
-    if (!session?.user?.id) {
+    if (!payload || !payload?.id) {
       return NextResponse.json(
         { error: "Usuario nao autenticado" },
         { status: 401 }
@@ -100,7 +99,7 @@ export async function DELETE(
     }
 
     try {
-      await deleteCollectionSpotConfirmation(id, session.user.id);
+      await deleteCollectionSpotConfirmation(id, payload.id);
       return NextResponse.json({ success: true });
     } catch (err: any) {
       if (err?.code === "P2025") {

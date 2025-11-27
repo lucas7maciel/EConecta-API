@@ -2,8 +2,7 @@ import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import prisma from "@/lib/prisma";
-
-export const runtime = "nodejs";
+import jwt from "jsonwebtoken";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
@@ -16,27 +15,37 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ],
 
   session: {
-    strategy: "database",
+    strategy: "jwt",
   },
 
   callbacks: {
-    authorized({ auth }) {
-      if (!auth?.user)
-        return Response.json(
-          {
-            status: 401,
-            error: "Você precisa estar registrado para ter acesso a esta rota",
-          },
-          { status: 401 }
-        );
-      return true;
+    async jwt({ token, account }) {
+      if (account?.provider === "google") {
+        token.id = token.sub;
+      }
+      return token;
     },
 
-    async session({ session, user }) {
-      return {
-        ...session,
-        user: { ...session.user, id: user.id },
+    async session({ session, token }) {
+      session.user = {
+        id: token.sub as string,
+        name: token.name as string,
+        email: token.email as string,
+        image: token.picture as string,
+        emailVerified: token.email_verified as Date | null,
       };
+
+      session.sessionToken = jwt.sign(
+        {
+          id: token.id,
+          email: token.email,
+          name: token.name,
+        },
+        process.env.NEXTAUTH_SECRET!,
+        { expiresIn: "30d" }
+      );
+
+      return session;
     },
   },
 

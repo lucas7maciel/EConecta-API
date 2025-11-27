@@ -1,14 +1,13 @@
 import { NextResponse, NextRequest } from "next/server";
 import { z } from "zod";
 
-import { auth } from "@/auth";
-
 import {
   deleteCollectionSpot,
   getCollectionSpotById,
   updateCollectionSpot,
 } from "../service";
 import { collectionSpotUpdateSchema } from "../validation";
+import { verifyAuth } from "@/lib/authJwt";
 
 const idParamSchema = z.object({
   id: z.coerce.number().int().positive(),
@@ -19,8 +18,9 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
+    const payload = verifyAuth(req);
+
+    if (!payload || !payload?.id) {
       return NextResponse.json(
         { error: "Usuario nao autenticado" },
         { status: 401 }
@@ -53,7 +53,7 @@ export async function PATCH(
       );
     }
 
-    if (existing.registeredById !== session.user.id) {
+    if (existing.registeredById !== payload.id) {
       return NextResponse.json(
         { error: "Sem permissao para alterar este ponto de coleta" },
         { status: 403 }
@@ -72,12 +72,13 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
+    const payload = verifyAuth(req);
+
+    if (!payload || !payload?.id) {
       return NextResponse.json(
         { error: "Usuario nao autenticado" },
         { status: 401 }
@@ -101,7 +102,7 @@ export async function DELETE(
       );
     }
 
-    if (existing.registeredById !== session.user.id) {
+    if (existing.registeredById !== payload.id) {
       return NextResponse.json(
         { error: "Sem permissao para deletar este ponto de coleta" },
         { status: 403 }
