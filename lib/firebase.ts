@@ -1,11 +1,13 @@
 import { initializeApp, cert, getApps } from "firebase-admin/app";
 import { getStorage } from "firebase-admin/storage";
-import path from "path";
-import fs from "fs";
+import type { ServiceAccount } from "firebase-admin";
 
-const serviceAccountPath = path.join(process.cwd(), "config/firebase-admin.json");
-console.log("Firebase path", serviceAccountPath)
-const serviceAccount = JSON.parse(fs.readFileSync(serviceAccountPath, "utf8"));
+const serviceAccount: ServiceAccount = {
+  projectId: process.env.FIREBASE_PROJECT_ID,
+  privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
+  clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+};
+
 
 if (!getApps().length) {
   initializeApp({

@@ -1,1 +1,0 @@
-Aqui ficará o firebase-admin.json
