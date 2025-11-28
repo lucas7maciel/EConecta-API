@@ -11,13 +11,12 @@ export async function GET(req: NextRequest) {
   }
 
   const session = await auth();
-  const sessionToken = session?.sessionToken;
 
   const target = new URL(callbackUrl);
 
-  if (sessionToken) {
+  if (session) {
     const code = jwt.sign(
-      { token: sessionToken, type: "mobile_code" },
+      { token: session, type: "mobile_code" },
       process.env.NEXTAUTH_SECRET!,
       { expiresIn: "5m" }
     );
