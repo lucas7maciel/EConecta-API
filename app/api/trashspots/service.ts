@@ -3,7 +3,29 @@ import prisma from "@/lib/prisma";
 import { SpotInput, SpotUpdateInput } from "./validation";
 
 export async function listSpots() {
-  return prisma.trashSpot.findMany({ include: { location: true } });
+  const spots = await prisma.trashSpot.findMany({
+    include: {
+      location: true,
+      registeredBy: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          image: true,
+        },
+      },
+      images: {
+        select: { id: true, url: true },
+        orderBy: { id: "desc" },
+        take: 1,
+      },
+    },
+  });
+
+  return spots.map(({ images, ...spot }) => ({
+    ...spot,
+    lastImage: images[0] ?? null,
+  }));
 }
 
 export async function createSpot(data: SpotInput, userId: string) {
