@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import jwt from "jsonwebtoken";
 import { auth } from "@/auth";
 
 export async function GET(req: NextRequest) {
@@ -11,16 +10,13 @@ export async function GET(req: NextRequest) {
   }
 
   const session = await auth();
+  console.log("Redirect session:", session);
+  const sessionToken = (session as {sessionToken?: string})?.sessionToken;
 
   const target = new URL(callbackUrl);
 
-  if (session) {
-    const code = jwt.sign(
-      { token: session, type: "mobile_code" },
-      process.env.NEXTAUTH_SECRET!,
-      { expiresIn: "5m" }
-    );
-    target.searchParams.set("code", code);
+  if (sessionToken) {
+    target.searchParams.set("token", sessionToken);
   } else {
     target.searchParams.set("error", "no_session");
   }
