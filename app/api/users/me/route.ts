@@ -32,17 +32,18 @@ export async function GET(request: Request) {
       );
     }
 
-    const [trashSpotsCount, confirmationsCount] = await Promise.all([
+    const [trashSpotsCount, confirmationsCount, commentsCount] = await Promise.all([
       prisma.trashSpot.count({ where: { registeredById: id } }),
       prisma.confirmation.count({ where: { userId: id } }),
+      prisma.comment.count({ where: { userId: id } }),
     ]);
 
     return NextResponse.json({
       data: {
-        name: user.name,
-        email: user.email,
+        user,
         trashSpotsCount,
         confirmationsCount,
+        commentsCount,
       },
     });
   } catch (error) {
