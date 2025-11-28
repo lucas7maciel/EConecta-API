@@ -6,7 +6,7 @@ import jwt from "jsonwebtoken";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
-  redirectProxyUrl: "https://econecta-api.vercel.app/api/auth/redirect",
+  redirectProxyUrl: "http://localhost:3000/api/auth/redirect",
   providers: [
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID!,
@@ -48,14 +48,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return session;
     },
 
-    async redirect({ url, baseUrl }) {
-      if (url === baseUrl + "/mobile") {
-        return "econecta://auth/callback";
-      }
-
-      if (url.startsWith(baseUrl)) return url;
-
-      return baseUrl;
+    async redirect({ url, baseUrl, ...outros }) {
+      console.log("Ta passando por aqui", url, baseUrl, outros);
+      const mobileCallback = encodeURIComponent("econecta://auth/callback");
+      return `${baseUrl}/api/redirect?callbackUrl=${mobileCallback}`;
     },
   },
 
