@@ -6,7 +6,6 @@ import jwt from "jsonwebtoken";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
-
   providers: [
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID!,
@@ -49,10 +48,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
 
     async redirect({ url, baseUrl }) {
-      if (url.startsWith("econecta://")) return url;
+      if (url === baseUrl + "/mobile") {
+        return "econecta://auth/callback";
+      }
 
       return baseUrl;
-    }
+    },
   },
 
   secret: process.env.NEXTAUTH_SECRET,
