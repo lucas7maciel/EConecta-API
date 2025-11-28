@@ -47,6 +47,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
       return session;
     },
+
+    async redirect({ url, baseUrl }) {
+      if (url.startsWith("econecta://")) return url;
+
+      return baseUrl;
+    }
   },
 
   secret: process.env.NEXTAUTH_SECRET,
