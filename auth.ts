@@ -6,7 +6,7 @@ import jwt from "jsonwebtoken";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
-  redirectProxyUrl: "http://localhost:3000/api/auth/redirect",
+  redirectProxyUrl: "https://econecta-api.vercel.app/api/auth/redirect",
   providers: [
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID!,
