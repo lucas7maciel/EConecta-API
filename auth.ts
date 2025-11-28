@@ -49,7 +49,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
 
     async redirect({ url, baseUrl }) {
-      if (url.startsWith("econecta://")) return url;
+      if (url === baseUrl + "/mobile") {
+        return "econecta://auth/callback";
+      }
 
       if (url.startsWith(baseUrl)) return url;
 
